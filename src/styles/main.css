@@ -219,16 +219,7 @@ body.is-3d {
 
 /* ── head-up controls ──────────────────────────────────────────────────────── */
 
-/*
- * Above the panel (z 40) and the entrance screen (z 46) so it stays reachable
- * throughout, below the modal overlays (z 50), which own the screen and trap
- * focus while they are open.
- */
 .theme-toggle {
-  position: fixed;
-  z-index: 47;
-  top: max(1.2rem, env(safe-area-inset-top));
-  right: 1.2rem;
   display: grid;
   place-items: center;
   background: var(--surface);
@@ -270,17 +261,106 @@ body.is-3d {
   display: none;
 }
 
-/* Step aside from an open panel, the way the progress dots do. */
-body.is-panel-open .theme-toggle {
-  transform: translateX(calc(var(--panel-width) * -1));
-}
-
+/* The navigation holds the top-right corner, so Skip takes the other one. */
 .skip {
   position: fixed;
   z-index: 30;
   top: max(1.2rem, env(safe-area-inset-top));
-  /* Clear of the theme toggle, which holds the corner. */
-  right: 4.6rem;
+  left: 1.2rem;
+}
+
+/* ── top bar ───────────────────────────────────────────────────────────────── */
+
+/*
+ * Above the panel (z 40) and the entrance screen (z 46) so it stays reachable
+ * throughout, below the modal overlays (z 50), which own the screen and trap
+ * focus while they are open.
+ */
+.topbar {
+  position: fixed;
+  z-index: 47;
+  top: max(1.2rem, env(safe-area-inset-top));
+  right: 1.2rem;
+  transition: transform 0.45s var(--ease);
+}
+
+/* Step aside from an open panel, the way the progress dots do. */
+body.is-panel-open .topbar {
+  transform: translateX(calc(var(--panel-width) * -1));
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.35rem 0.3rem 0.9rem;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+.nav__list {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav__link {
+  display: block;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.nav__link:hover {
+  color: var(--ink);
+  background: var(--hover-wash);
+}
+
+.nav__link.is-current {
+  color: var(--ink);
+  background: var(--hover-wash);
+}
+
+/* The one mark of where you are that survives being uppercase and small. */
+.nav__link.is-current::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 0.28rem auto 0;
+  width: 1.1rem;
+  background: var(--accent);
+}
+
+.nav__menu {
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  place-items: center;
+  gap: 5px;
+  color: var(--ink);
+}
+
+.nav__menu span {
+  display: block;
+  width: 1.05rem;
+  height: 1.5px;
+  background: currentColor;
 }
 
 .hint {
@@ -326,6 +406,687 @@ body.is-panel-open .theme-toggle {
   bottom: max(1.4rem, calc(env(safe-area-inset-bottom) + 1.4rem));
   background: var(--surface);
   backdrop-filter: blur(6px);
+}
+
+/* ── standing pages ────────────────────────────────────────────────────────── */
+
+.pages {
+  position: relative;
+  z-index: 20;
+  min-height: 100%;
+  background: var(--paper);
+}
+
+/* A page replaces the room, so nothing from the room should show through. */
+body.is-page {
+  overflow: auto;
+}
+
+body.is-page #scene,
+body.is-page .dots,
+body.is-page .hint,
+body.is-page .hint-toggle,
+body.is-page .skip,
+body.is-page .panel,
+body.is-page .fallback {
+  display: none !important;
+}
+
+.page {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 6.5rem 1.6rem 6rem;
+}
+
+.pagehead {
+  max-width: 44rem;
+  margin-bottom: 3.4rem;
+}
+
+.pagehead__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 4.2rem);
+  line-height: 1.05;
+  margin: 0 0 1rem;
+}
+
+.pagehead__lede {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Links inside a page read as text with a rule under it, not as web links. */
+.page a {
+  color: var(--ink);
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.24em;
+}
+
+.page a:hover {
+  color: var(--accent);
+}
+
+/* ── artists page ──────────────────────────────────────────────────────────── */
+
+.banner {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  align-items: center;
+  gap: 2rem;
+  background: var(--notice);
+  padding: clamp(1.6rem, 4vw, 3.2rem);
+  margin-bottom: 4.5rem;
+}
+
+.banner__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  margin: 0 0 0.8rem;
+}
+
+.banner__blurb {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 30rem;
+}
+
+.banner__art {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.banner__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.shopsection {
+  margin-bottom: 4.5rem;
+}
+
+.shopsection__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+.shopsection__blurb {
+  text-align: center;
+  color: var(--ink-soft);
+  max-width: 40rem;
+  margin: 0 auto 2.2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.cardgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 1.8rem 1.4rem;
+}
+
+.artistcard {
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.artistcard__image {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--notice);
+  margin-bottom: 0.7rem;
+}
+
+.artistcard__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.45s var(--ease);
+}
+
+.artistcard:hover .artistcard__image img {
+  transform: scale(1.04);
+}
+
+.artistcard__name {
+  font-size: 1.02rem;
+  color: var(--ink);
+}
+
+.artistcard:hover .artistcard__name {
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+}
+
+.artistcard__meta {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-top: 0.15rem;
+}
+
+.azlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+  max-width: 46rem;
+  margin-inline: auto;
+}
+
+.azlist li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.azlist__name {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.azlist__name:hover {
+  color: var(--accent);
+}
+
+.azlist__meta {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+/* ── artwork page ──────────────────────────────────────────────────────────── */
+
+.browse {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  gap: 2.6rem;
+  align-items: start;
+}
+
+.rail {
+  position: sticky;
+  top: 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.rail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.7rem;
+}
+
+.rail__title {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 500;
+  margin: 0;
+}
+
+.linkbutton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+}
+
+.facet {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.facet__legend {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 0;
+  margin-bottom: 0.2rem;
+}
+
+.facet__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.facet__option:hover {
+  color: var(--ink);
+}
+
+.facet__option input {
+  accent-color: var(--accent);
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.facet__count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.facet__range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.facet__range label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.facet__small {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+.facet input[type='search'],
+.facet input[type='number'] {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-solid);
+  color: var(--ink);
+  width: 100%;
+}
+
+.facet input:focus-visible,
+.enquiry input:focus-visible,
+.enquiry select:focus-visible,
+.enquiry textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1.8rem;
+}
+
+.toolbar__count {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.toolbar__sort {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.toolbar__sort select {
+  font: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-solid);
+  color: var(--ink);
+}
+
+.worksgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 2.4rem 1.6rem;
+  align-items: start;
+}
+
+.worktile {
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.worktile__image {
+  position: relative;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.worktile__image img {
+  width: 100%;
+  display: block;
+  transition: transform 0.4s var(--ease);
+}
+
+.worktile:hover .worktile__image img {
+  transform: translateY(-4px);
+}
+
+.worktile__badge {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.5rem;
+  background: var(--surface-solid);
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+.worktile__artist {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.worktile__title {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-top: 0.1rem;
+}
+
+.worktile__medium {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  margin-top: 0.3rem;
+}
+
+.worktile__price {
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.worksgrid__empty {
+  grid-column: 1 / -1;
+  font-family: var(--serif);
+  color: var(--ink-soft);
+  padding: 3rem 0;
+}
+
+/* ── contact page ──────────────────────────────────────────────────────────── */
+
+.twoup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.6rem, 5vw, 4rem);
+  align-items: center;
+  margin-bottom: 4.5rem;
+}
+
+.twoup__text p {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 0 0 1.2rem;
+}
+
+.twoup__panel {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--notice);
+}
+
+.twoup__panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.band {
+  background: var(--notice);
+  padding: clamp(2rem, 5vw, 3.4rem);
+  margin-bottom: 4.5rem;
+}
+
+.band__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.8rem;
+  text-align: center;
+  margin: 0 0 2.2rem;
+}
+
+.band__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 2rem;
+}
+
+.band__columns h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+
+.band__columns p {
+  margin: 0;
+  font-family: var(--serif);
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.contactmain {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: start;
+}
+
+.contactmain__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.6rem;
+  margin: 0 0 1.6rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.field {
+  margin-bottom: 1.4rem;
+}
+
+.field__label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.4rem;
+}
+
+.field__hint {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin: 0 0 0.4rem;
+}
+
+.enquiry input,
+.enquiry select,
+.enquiry textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-solid);
+  color: var(--ink);
+}
+
+.enquiry textarea {
+  resize: vertical;
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+
+.enquiry .is-invalid {
+  border-color: var(--sold);
+}
+
+.field__error {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--sold);
+  min-height: 1em;
+}
+
+.field__error:empty {
+  min-height: 0;
+}
+
+/* Off-screen rather than display:none, so a bot still finds it tempting. */
+.enquiry__honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.enquiry__actions {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-top: 1.8rem;
+}
+
+.enquiry__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.enquiry__status.is-error {
+  color: var(--sold);
+}
+
+.enquiry__thanks {
+  padding: 1.8rem;
+  border: 1px solid var(--rule);
+  background: var(--notice);
+}
+
+.enquiry__thanks h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.4rem;
+  margin: 0 0 0.6rem;
+}
+
+.enquiry__thanks p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.6rem 1rem;
+  margin: 0 0 2rem;
+  font-size: 0.92rem;
+}
+
+.details dt {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-top: 0.15rem;
+}
+
+.details dd {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.details a {
+  color: var(--ink);
+  text-underline-offset: 0.24em;
+}
+
+.details--hours dt {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.details__subhead {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+}
+
+.details__note {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-faint);
 }
 
 /* ── progress dots ─────────────────────────────────────────────────────────── */
@@ -859,7 +1620,75 @@ body.is-3d .fallback {
 
 /* ── narrow screens ────────────────────────────────────────────────────────── */
 
+@media (max-width: 980px) {
+  .browse {
+    grid-template-columns: 1fr;
+  }
+
+  .rail {
+    position: static;
+  }
+
+  .contactmain,
+  .twoup,
+  .banner {
+    grid-template-columns: 1fr;
+  }
+
+  .banner__art {
+    order: -1;
+  }
+}
+
 @media (max-width: 720px) {
+  /* Four links and a toggle will not fit across a phone, so they fold away. */
+  .nav__menu {
+    display: grid;
+  }
+
+  .nav {
+    padding: 0.3rem;
+    gap: 0.1rem;
+  }
+
+  .nav__list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-width: 11rem;
+    padding: 0.4rem;
+    /* Opaque, not glass: a menu with the page showing through is unreadable. */
+    background: var(--paper-solid);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--rule);
+    border-radius: 0.8rem;
+  }
+
+  .nav.is-open .nav__list {
+    display: flex;
+  }
+
+  .nav__link {
+    border-radius: 0.5rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .nav__link.is-current::after {
+    margin-left: 0;
+  }
+
+  .page {
+    padding: 5.5rem 1.1rem 4rem;
+  }
+
+  .details {
+    grid-template-columns: 6.5rem 1fr;
+  }
+
   .panel {
     top: auto;
     bottom: 0;
@@ -899,7 +1728,7 @@ body.is-3d .fallback {
   }
 
   /* The sheet is at the bottom on a phone, so the corner stays free. */
-  body.is-panel-open .theme-toggle {
+  body.is-panel-open .topbar {
     transform: none;
   }
 }

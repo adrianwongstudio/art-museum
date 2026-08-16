@@ -12,7 +12,7 @@ import { Clock } from 'three';
 import { getHangingBySlug, hangings, isHung, room, sculpture } from './data/gallery.js';
 import { getWork, getWorkBySlug } from './data/works.js';
 import { artistsById } from './data/artists.js';
-import { pageTitle } from './data/site.js';
+import { pageTitle, site } from './data/site.js';
 
 import { createControls } from './camera/controls.js';
 import { createTravelController } from './camera/travelController.js';
@@ -26,7 +26,15 @@ import { buildScene } from './core/scene.js';
 
 import { createPicker } from './interaction/picker.js';
 import { createProgress } from './interaction/progress.js';
-import { artistHash, artworkHash, parseHash, replaceHash, roomHash } from './interaction/router.js';
+import {
+  artistHash,
+  artworkHash,
+  isPageRoute,
+  pageHash,
+  parseHash,
+  replaceHash,
+  roomHash,
+} from './interaction/router.js';
 
 import { createArtistView } from './ui/artistView.js';
 import { createDots } from './ui/dots.js';
@@ -34,6 +42,8 @@ import { renderFallback } from './ui/fallback.js';
 import { createHints } from './ui/hints.js';
 import { createLightbox } from './ui/lightbox.js';
 import { createLoading } from './ui/loading.js';
+import { createNav } from './ui/nav.js';
+import { createPages, PAGE_TITLES } from './ui/pages/index.js';
 import { createPanel } from './ui/panel.js';
 import { createTheme, otherTheme } from './ui/theme.js';
 
@@ -49,6 +59,8 @@ const dom = {
   lightbox: document.getElementById('lightbox'),
   fallback: document.getElementById('fallback'),
   themeToggle: document.getElementById('theme-toggle'),
+  nav: document.getElementById('nav'),
+  pages: document.getElementById('pages'),
 };
 
 /** Where the visitor stands once they are through the door. */
@@ -76,14 +88,73 @@ dom.themeToggle.addEventListener('click', () => theme.toggle());
 const webgl = isWebGLAvailable();
 renderFallback(dom.fallback, { webgl });
 
+/**
+ * The gallery view, once it exists. The standing pages work without it — someone
+ * reading the opening hours does not need a 3D room — so everything above this
+ * line runs whether or not WebGL does.
+ */
+let roomView = null;
+
+/** Filters handed to the artwork page by a link that already knows what it wants. */
+let pendingCriteria = null;
+
+const pages = createPages({
+  root: dom.pages,
+  handlers: {
+    onArtist: (artistId) => go(artistHash(artistId)),
+    onWork: (work) => go(artworkHash(work.slug)),
+    onMedium: (medium) => {
+      pendingCriteria = { mediums: [medium] };
+      go(pageHash('artworks'));
+    },
+  },
+});
+
+const nav = createNav({
+  root: dom.nav,
+  toggle: dom.themeToggle,
+  onNavigate: (route) => go(route === 'room' ? roomHash() : pageHash(route)),
+});
+
+/** One way in: set the hash and let the router decide what that means. */
+function go(hash) {
+  if (window.location.hash === hash) {
+    applyTopRoute(parseHash(hash));
+    return;
+  }
+  window.location.hash = hash;
+}
+
+function applyTopRoute(route) {
+  nav.setCurrent(route.route);
+
+  if (isPageRoute(route.route)) {
+    roomView?.pause();
+    const criteria = pendingCriteria;
+    pendingCriteria = null;
+    pages.show(route.route, criteria ? { initialCriteria: criteria } : undefined);
+    document.title = `${PAGE_TITLES[route.route]} · ${site.name}`;
+    return;
+  }
+
+  pages.hide();
+  document.title = pageTitle(null);
+
+  if (roomView) roomView.resume(route);
+  else dom.fallback.focus({ preventScroll: true });
+}
+
+window.addEventListener('hashchange', () => applyTopRoute(parseHash(window.location.hash)));
+
 if (!webgl) {
   dom.loading.hidden = true;
   dom.canvas.hidden = true;
-  dom.fallback.focus();
 } else {
   document.body.classList.add('is-3d');
   start();
 }
+
+applyTopRoute(parseHash(window.location.hash));
 
 function start() {
   const reducedMotion = prefersReducedMotion();
@@ -110,6 +181,8 @@ function start() {
   const progress = createProgress();
 
   let entering = false; // the walk in from the vestibule, which nothing may interrupt
+  let entered = false; // whether the visitor has been through the door this session
+  let rendering = true; // false while a standing page has the screen
 
   // ── UI ──────────────────────────────────────────────────────────────────────
 
@@ -177,11 +250,10 @@ function start() {
     restoreHash();
   });
 
-  window.addEventListener('hashchange', () => applyRoute(parseHash(window.location.hash)));
-
   // ── actions ─────────────────────────────────────────────────────────────────
 
   function enterGallery() {
+    entered = true;
     dots.show();
     hints.show();
 
@@ -448,6 +520,10 @@ function start() {
     requestAnimationFrame(frame);
     const dt = Math.min(0.05, clock.getDelta()); // a long tab-switch must not teleport anyone
 
+    // A standing page is open: there is nothing to draw and no reason to spend a
+    // phone's battery drawing it.
+    if (!rendering) return;
+
     if (travel.active) travel.update(dt);
     else controls.update(dt);
 
@@ -468,4 +544,28 @@ function start() {
   // at the door if a texture quietly fails to report back.
   loading.setProgress(0.06);
   setTimeout(() => loading.setProgress(1), 6000);
+
+  roomView = {
+    /** Stop drawing while a standing page is up. */
+    pause() {
+      rendering = false;
+      dom.loading.hidden = true;
+    },
+
+    /**
+     * Back to the gallery. Someone who has not been through the door yet gets the
+     * entrance screen; someone returning from a page picks up where they stood.
+     */
+    resume(route) {
+      rendering = true;
+
+      if (!entered) {
+        dom.loading.hidden = false;
+        dom.loading.classList.remove('is-gone');
+        return;
+      }
+
+      applyRoute(route);
+    },
+  };
 }

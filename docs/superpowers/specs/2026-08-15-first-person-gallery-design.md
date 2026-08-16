@@ -179,14 +179,48 @@ is a single `image` path change.
 - **Hint** — "Click a painting to walk up to it · drag to look around" on first entry,
   fading after the first successful interaction, with a `?` button to bring it back.
 
+## 8a. The standing pages (added 2026-08-16)
+
+The room is one of four places on the site. A bar in the top-right corner — before
+the theme toggle — holds **Exhibition**, **Artists**, **Artwork**, **Contact**, and
+collapses behind a menu button under 720 px.
+
+- **Artists** follows the art.com/shop/artists pattern: a featured banner, then sections
+  that announce themselves with a centred heading and a line of explanation, then grids
+  of cards that are an image with a name beneath. Where that page groups thousands of
+  artists by school, this one has four, so the sections are ones the catalogue can fill
+  honestly — who is exhibiting, what they work in, and an A–Z.
+- **Artwork** follows the shape of an art-marketplace browse page: a filter rail (search,
+  artist, medium, availability, price), a toolbar with a count and a sort control, and a
+  grid of works led by the artist's name. The filtering is real and client-side over the
+  whole catalogue. artsy.net/collect itself could not be opened — it sits behind a bot
+  check — so this follows the conventions of that page type rather than its exact styling.
+- **Contact** takes the skeleton of the client's own about page (eyebrow, large heading,
+  lede, two-column text against a panel, a tinted three-column band, details at the end)
+  and sets it in the gallery's language, with a working enquiry form.
+
+A page **replaces** the room: the canvas is hidden and the render loop stops while one is
+open, and resuming puts the visitor back where they stood. The pages work without WebGL,
+so they are wired above the branch that builds the 3D scene.
+
+The contact form validates in the browser, reports every problem at once, moves focus to
+the first, and carries a honeypot. With no endpoint configured it hands a composed message
+to the visitor's mail client — no backend, no third party; setting `site.contactEndpoint`
+switches it to POST JSON with no other change.
+
 ## 9. Routing
 
 Hash-based, no history pollution during travel.
 
+- `#/` — the room, no selection.
+- `#/artists`, `#/artwork`, `#/contact` — the standing pages.
 - `#/artwork/<slug>` — opens on that work; on cold load the entrance walk is replaced by
   a direct travel to it.
 - `#/artist/<id>` — opens the artist overlay.
-- Empty hash — the room, no selection.
+
+Single-segment plural routes are pages; two-segment singular ones point into the room.
+That is what separates `#/artwork` from `#/artwork/gulf-weather`, and it is unit-tested
+in both directions.
 
 Hash updates on arrival, not on click, so the URL always reflects where the visitor is.
 
