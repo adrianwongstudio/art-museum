@@ -7,8 +7,11 @@ import { artistsById } from '../data/artists.js';
 import { inquiryLink } from '../data/site.js';
 import { formatDimensions, formatPrice } from '../data/works.js';
 import { clear, el } from './dom.js';
+import { trapFocus } from './focus.js';
 
 export function createLightbox({ root, onArtist, onClose }) {
+  let releaseFocus = null;
+
   return {
     show(work) {
       const artist = artistsById[work.artistId];
@@ -64,10 +67,14 @@ export function createLightbox({ root, onArtist, onClose }) {
 
       root.hidden = false;
       requestAnimationFrame(() => root.classList.add('is-open'));
+      releaseFocus?.();
+      releaseFocus = trapFocus(root);
       root.querySelector('.overlay__close')?.focus();
     },
 
     hide() {
+      releaseFocus?.();
+      releaseFocus = null;
       root.classList.remove('is-open');
       const done = () => {
         if (!root.classList.contains('is-open')) root.hidden = true;

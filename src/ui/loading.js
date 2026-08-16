@@ -36,9 +36,5 @@ export function createLoading({ root, onEnter }) {
         button.focus();
       }
     },
-
-    get isReady() {
-      return ready;
-    },
   };
 }

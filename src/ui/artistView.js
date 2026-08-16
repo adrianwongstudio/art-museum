@@ -5,6 +5,7 @@
 import { artistsById } from '../data/artists.js';
 import { formatDimensions, formatPrice, worksByArtist } from '../data/works.js';
 import { clear, el } from './dom.js';
+import { trapFocus } from './focus.js';
 
 export function createArtistView({ root, onWork, onClose }) {
   function card(work) {
@@ -23,6 +24,8 @@ export function createArtistView({ root, onWork, onClose }) {
       ],
     );
   }
+
+  let releaseFocus = null;
 
   return {
     show(artistId) {
@@ -60,10 +63,14 @@ export function createArtistView({ root, onWork, onClose }) {
 
       root.hidden = false;
       requestAnimationFrame(() => root.classList.add('is-open'));
+      releaseFocus?.();
+      releaseFocus = trapFocus(root);
       root.querySelector('.overlay__close')?.focus();
     },
 
     hide() {
+      releaseFocus?.();
+      releaseFocus = null;
       root.classList.remove('is-open');
       const done = () => {
         if (!root.classList.contains('is-open')) root.hidden = true;

@@ -11,6 +11,12 @@ export const site = {
   location: 'By appointment',
 };
 
+/** What the browser tab says. Also what a bookmark of a deep link is called. */
+export function pageTitle(work, artistName) {
+  if (!work) return `${site.name} — a gallery you can walk through`;
+  return `${work.title} — ${artistName} · ${site.name}`;
+}
+
 /** A pre-filled enquiry about a specific work. */
 export function inquiryLink(work, artistName) {
   const subject = `Enquiry: ${work.title} (${artistName}, ${work.year})`;

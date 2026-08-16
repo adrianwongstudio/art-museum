@@ -79,6 +79,8 @@ export function buildSculpture() {
   pedestal.position.y = spec.pedestal.height / 2;
   pedestal.receiveShadow = true;
   pedestal.castShadow = true;
+  // The plinth is part of "that one" as far as a visitor pointing at it is concerned.
+  pedestal.userData = { type: 'sculpture' };
   group.add(pedestal);
 
   const material = new MeshStandardMaterial({
@@ -131,5 +133,5 @@ export function buildSculpture() {
   contact.position.y = 0.005;
   group.add(contact);
 
-  return { group, targets: [body, lobe, foot] };
+  return { group, targets: [body, lobe, foot, pedestal] };
 }

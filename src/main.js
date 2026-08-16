@@ -11,6 +11,8 @@ import { Clock } from 'three';
 
 import { getHangingBySlug, hangings, isHung, room, sculpture } from './data/gallery.js';
 import { getWork, getWorkBySlug } from './data/works.js';
+import { artistsById } from './data/artists.js';
+import { pageTitle } from './data/site.js';
 
 import { createControls } from './camera/controls.js';
 import { createTravelController } from './camera/travelController.js';
@@ -137,6 +139,8 @@ function start() {
     onInterrupt: () => {
       if (!entering) travel.cancel();
     },
+    isBlocked: () => artistView.open || lightbox.open,
+    uiRoots: [dom.panel, dom.artistView, dom.lightbox],
   });
 
   dom.skip.addEventListener('click', () => skipEntrance());
@@ -200,10 +204,25 @@ function start() {
     applyRoute(parseHash(window.location.hash), { fromEntrance: true });
   }
 
+  /**
+   * Send the panel away as soon as a new walk begins. Leaving it up would mean
+   * three seconds of reading about the work you are walking away from.
+   */
+  function leaveCurrentWork() {
+    panel.hide();
+    frameAroundPanel();
+    document.title = pageTitle(null);
+  }
+
+  function announce(work) {
+    document.title = pageTitle(work, artistsById[work.artistId]?.name ?? '');
+  }
+
   /** Walk to a hung work and open its panel on arrival. */
   function walkTo(hanging) {
     hints.retire();
     closeOverlays();
+    leaveCurrentWork();
 
     const viewpoint = viewpointForHanging(hanging);
     dots.setCurrent(hanging.work.slug);
@@ -214,6 +233,7 @@ function start() {
       onArrive: () => {
         panel.show(hanging.work);
         frameAroundPanel();
+        announce(hanging.work);
         progress.markViewed(hanging.work.slug);
         dots.setCurrent(hanging.work.slug);
         replaceHash(artworkHash(hanging.work.slug));
@@ -224,6 +244,7 @@ function start() {
   function walkToSculpture() {
     hints.retire();
     closeOverlays();
+    leaveCurrentWork();
 
     const work = getWork(sculpture.workId);
     const viewpoint = viewpointForSculpture({ x: visitor.x, z: visitor.z });
@@ -235,6 +256,7 @@ function start() {
       onArrive: () => {
         panel.show(work);
         frameAroundPanel();
+        announce(work);
         replaceHash(artworkHash(work.slug));
       },
     });
@@ -278,6 +300,7 @@ function start() {
   function closePanel() {
     panel.hide();
     frameAroundPanel();
+    document.title = pageTitle(null);
     dots.setCurrent(null);
     lighting.highlight(null);
     replaceHash(roomHash());
@@ -297,7 +320,9 @@ function start() {
     if (route.route === 'artwork') {
       const hanging = getHangingBySlug(route.slug);
       if (hanging) {
-        if (panel.work?.slug !== route.slug || fromEntrance) walkTo(hanging);
+        // Already standing here with the panel open: nothing to do.
+        if (panel.work?.slug === route.slug && !fromEntrance) return;
+        walkTo(hanging);
         return;
       }
 

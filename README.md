@@ -33,6 +33,11 @@ npm run dev
 - **Dots along the bottom** — jump to any of the eight; they fill in as you go
 - Any drag or key press interrupts a walk and hands control straight back
 
+The whole piece answers to a click — canvas, frame or wall placard — as does the
+sculpture's plinth. While an overlay is open the room ignores input, and the walk
+keys stand down whenever focus is inside the panel or an overlay, so arrow keys
+belong to whatever the visitor is actually reading.
+
 Links are shareable: `#/artwork/gulf-weather` opens standing in front of that
 work, `#/artist/banks` opens that artist.
 
@@ -83,6 +88,11 @@ canvas: hidden while the 3D room is running, and promoted to the visible page
 when WebGL is unavailable. `prefers-reduced-motion` shortens every walk to 0.4 s
 and switches off the head bob.
 
+The artist view and lightbox are proper modal dialogs: focus is trapped inside
+while they are open, Escape closes them, and closing returns focus to whatever
+opened them. The progress dots are ordinary buttons, so the eight works are
+reachable — and walkable to — by keyboard alone.
+
 ## Deployment
 
 Static output. `wrangler.jsonc` is set up for Cloudflare Workers static assets:
@@ -101,4 +111,9 @@ exactly one light casts shadows — the wall spots light flat planes, where a
 shadow map would cost frames and show nothing. Contact shadows under the pedestal
 and bench are painted gradients.
 
-The JavaScript bundle is ~528 kB (138 kB gzipped), almost all of it Three.js.
+JavaScript ships as two chunks: the gallery itself (~47 kB, 17 kB gzipped) and
+Three.js (~482 kB, 121 kB gzipped). Three.js is split out deliberately — editing
+the catalogue then expires 47 kB of cache rather than half a megabyte.
+
+There is no `og:image` yet. When real photography arrives, add one: a photograph
+of an actual work makes a far better share card than anything generated.

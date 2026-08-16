@@ -9,6 +9,7 @@
  * is a look. That single rule is what lets one gesture do both jobs.
  */
 
+import { keyboardIsInUI } from '../ui/focus.js';
 import { clampToRoom } from './bounds.js';
 import { clampPitch } from './visitor.js';
 
@@ -24,7 +25,18 @@ const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft']);
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
 const WALK_KEYS = new Set([...FORWARD_KEYS, ...BACK_KEYS, ...LEFT_KEYS, ...RIGHT_KEYS]);
 
-export function createControls({ canvas, visitor, onSelect, onHover, onInterrupt, reducedMotion }) {
+export function createControls({
+  canvas,
+  visitor,
+  onSelect,
+  onHover,
+  onInterrupt,
+  reducedMotion,
+  /** True while an overlay owns the screen and the room should ignore input. */
+  isBlocked = () => false,
+  /** Reading surfaces whose focused controls should keep the walk keys. */
+  uiRoots = [],
+}) {
   const keys = new Set();
   let pointerId = null;
   let last = { x: 0, y: 0 };
@@ -39,6 +51,7 @@ export function createControls({ canvas, visitor, onSelect, onHover, onInterrupt
 
   function onPointerDown(event) {
     if (event.button !== undefined && event.button !== 0) return;
+    if (isBlocked()) return;
     pointerId = event.pointerId;
     last = { x: event.clientX, y: event.clientY };
     travelled = 0;
@@ -78,6 +91,9 @@ export function createControls({ canvas, visitor, onSelect, onHover, onInterrupt
   function onKeyDown(event) {
     if (!WALK_KEYS.has(event.code)) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    // Arrow keys belong to whatever the visitor is actually operating — a dot,
+    // a link in the panel — not to walking, and an open overlay owns the room.
+    if (isBlocked() || keyboardIsInUI(uiRoots)) return;
     if (!keys.has(event.code)) onInterrupt?.();
     keys.add(event.code);
     event.preventDefault();

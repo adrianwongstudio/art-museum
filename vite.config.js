@@ -8,6 +8,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        // Three.js never changes between deploys; the gallery does. Splitting
+        // them means a content edit does not expire 500 kB of cached library.
+        manualChunks: { three: ['three'] },
+      },
+    },
+    chunkSizeWarningLimit: 700,
   },
   test: {
     environment: 'node',

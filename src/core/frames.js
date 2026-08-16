@@ -25,7 +25,8 @@ const PLACARD_HEIGHT = 1.08;
 
 /**
  * @param {import('three').TextureLoader} loader
- * @returns {{ group: Group, targets: Mesh[] }} targets are the meshes the raycaster tests
+ * @returns {{ group: Group, targets: Mesh[] }} every mesh a visitor might aim at
+ *   when they mean "that one" — canvas, frame and placard alike
  */
 export function buildHangings(loader) {
   const group = new Group();
@@ -49,7 +50,10 @@ export function buildHangings(loader) {
     frame.position.z = FRAME_DEPTH / 2;
     frame.castShadow = false;
     frame.receiveShadow = true;
+    // Aiming at the frame edge means the same thing as aiming at the picture.
+    frame.userData = { type: 'artwork', hanging };
     piece.add(frame);
+    targets.push(frame);
 
     // The work itself, sitting just proud of the frame's face.
     const texture = loader.load(work.image);
@@ -66,7 +70,9 @@ export function buildHangings(loader) {
     piece.add(canvas);
     targets.push(canvas);
 
-    piece.add(buildPlacard(hanging));
+    const placard = buildPlacard(hanging);
+    piece.add(placard);
+    targets.push(placard);
     group.add(piece);
   }
 
@@ -89,6 +95,6 @@ function buildPlacard(hanging) {
     PLACARD_HEIGHT - position.y,
     FRAME_DEPTH * 0.4,
   );
-  placard.userData = { type: 'placard', hanging };
+  placard.userData = { type: 'artwork', hanging };
   return placard;
 }
