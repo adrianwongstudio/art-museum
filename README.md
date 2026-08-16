@@ -153,14 +153,34 @@ reachable — and walkable to — by keyboard alone.
 
 ## Deployment
 
-Static output. `wrangler.jsonc` is set up for Cloudflare Workers static assets:
+The build is entirely static — `npm run build` writes `dist/`, and there is no
+server side to it.
+
+### Connecting the repo to Cloudflare
+
+In the dashboard: **Workers & Pages → Create → Pages → Connect to Git**, pick
+`adrianwongstudio/art-museum`, and use:
+
+| Setting | Value |
+|---|---|
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node version | 20 or newer (`.nvmrc` pins 22) |
+
+Every push to `main` then builds and deploys itself, the same way betm-club does.
+
+### Deploying by hand
+
+`wrangler.jsonc` is already configured to serve `dist/` as Workers static assets,
+so this works without the dashboard:
 
 ```bash
 npm run deploy
 ```
 
-For Cloudflare Pages instead, point the project at build command `npm run build`
-and output directory `dist`.
+`not_found_handling` is set to `single-page-application` because the site routes
+on the hash and every URL must return `index.html`.
 
 ## Performance
 
