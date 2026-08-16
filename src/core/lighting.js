@@ -1,22 +1,27 @@
 /**
- * The lighting rig: soft daylight fill from the skylights, a warm spot on each
- * work, and one shadow-casting key on the sculpture.
+ * The lighting rig: fill from above, a warm spot on each work, and one
+ * shadow-casting key on the sculpture.
  *
  * Only the sculpture's light casts shadows. The wall spots light flat planes, so
  * a shadow map would cost frames and show nothing.
+ *
+ * Intensities and colours come from the palette, because they are most of what
+ * separates the white cube from the room after hours.
  */
 
-import { AmbientLight, DirectionalLight, HemisphereLight, SpotLight } from 'three';
+import { AmbientLight, Color, DirectionalLight, HemisphereLight, SpotLight } from 'three';
 
 import { hangings, room, sculpture } from '../data/gallery.js';
 import { viewingDistance } from '../camera/viewpoints.js';
+import { paletteFor } from './palette.js';
 
 export function buildLighting(scene) {
-  scene.add(new HemisphereLight('#fff8ee', '#d6cbb6', 1.15));
-  scene.add(new AmbientLight('#ffffff', 0.5));
+  const hemisphere = new HemisphereLight();
+  const ambient = new AmbientLight('#ffffff');
+  scene.add(hemisphere, ambient);
 
   // Daylight through the skylights, angled so the room has a direction.
-  const sun = new DirectionalLight('#fff3e0', 0.55);
+  const sun = new DirectionalLight();
   sun.position.set(-6, 12, 4);
   scene.add(sun);
 
@@ -49,16 +54,46 @@ export function buildLighting(scene) {
   key.shadow.bias = -0.0012;
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 14;
-  scene.add(key);
-  scene.add(key.target);
+  scene.add(key, key.target);
+
+  let palette = paletteFor('light');
+  let hovered = null;
+
+  function applySpotIntensities() {
+    for (const [slug, spot] of spots) {
+      spot.intensity = slug === hovered ? palette.spot.hover : palette.spot.intensity;
+    }
+  }
 
   return {
     spots,
-    /** Lift the spot on the work under the cursor, so hover reads in 3D as well as on the cursor. */
-    highlight(slug) {
-      for (const [key_, spot] of spots) {
-        spot.intensity = key_ === slug ? 30 : 22;
+
+    applyTheme(theme) {
+      palette = paletteFor(theme);
+
+      hemisphere.color = new Color(palette.hemisphere.sky);
+      hemisphere.groundColor = new Color(palette.hemisphere.ground);
+      hemisphere.intensity = palette.hemisphere.intensity;
+
+      ambient.intensity = palette.ambient;
+
+      sun.color = new Color(palette.sun.colour);
+      sun.intensity = palette.sun.intensity;
+
+      for (const spot of spots.values()) {
+        spot.color = new Color(palette.spot.colour);
+        spot.penumbra = palette.spot.penumbra;
       }
+      applySpotIntensities();
+
+      key.color = new Color(palette.key.colour);
+      key.intensity = palette.key.intensity;
+    },
+
+    /** Lift the spot on the work under the cursor, so hover reads in the room too. */
+    highlight(slug) {
+      hovered = slug;
+      applySpotIntensities();
     },
   };
 }

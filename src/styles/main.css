@@ -16,11 +16,41 @@
   --accent: #8a4b32;
   --sold: #8a2f22;
 
+  /* Glass over the room, solid reading surfaces, and the wash behind a dialog. */
+  --surface: rgba(251, 250, 247, 0.86);
+  --surface-solid: rgba(251, 250, 247, 0.96);
+  --scrim: rgba(29, 27, 24, 0.42);
+  --hover-wash: rgba(29, 27, 24, 0.07);
+  --btn-border: rgba(29, 27, 24, 0.25);
+  --notice: #efe9df;
+
   --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
   --sans: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
 
   --panel-width: min(27rem, 38vw);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/*
+ * After hours. Dark is a different hang rather than an inverted screenshot: the
+ * room's own walls and lights change too, in core/palette.js.
+ */
+[data-theme='dark'] {
+  --paper: #141311;
+  --paper-solid: #1e1c19;
+  --ink: #f2ede4;
+  --ink-soft: #b6ada0;
+  --ink-faint: #857c70;
+  --rule: #35312b;
+  --accent: #d98f66;
+  --sold: #e07a63;
+
+  --surface: rgba(30, 28, 25, 0.86);
+  --surface-solid: rgba(24, 22, 20, 0.96);
+  --scrim: rgba(8, 7, 6, 0.66);
+  --hover-wash: rgba(242, 237, 228, 0.09);
+  --btn-border: rgba(242, 237, 228, 0.28);
+  --notice: #26221d;
 }
 
 * {
@@ -104,9 +134,9 @@ body.is-3d {
 }
 
 .btn--ghost {
-  background: rgba(251, 250, 247, 0.82);
+  background: var(--surface);
   backdrop-filter: blur(6px);
-  border-color: rgba(29, 27, 24, 0.25);
+  border-color: var(--btn-border);
   padding: 0.6rem 1.1rem;
 }
 
@@ -123,7 +153,9 @@ body.is-3d {
 .loading {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  /* Above the room and its head-up UI, below the theme toggle: a visitor should
+     be able to set the lighting before walking in. */
+  z-index: 46;
   display: grid;
   place-items: center;
   background: var(--paper);
@@ -187,11 +219,68 @@ body.is-3d {
 
 /* ── head-up controls ──────────────────────────────────────────────────────── */
 
+/*
+ * Above the panel (z 40) and the entrance screen (z 46) so it stays reachable
+ * throughout, below the modal overlays (z 50), which own the screen and trap
+ * focus while they are open.
+ */
+.theme-toggle {
+  position: fixed;
+  z-index: 47;
+  top: max(1.2rem, env(safe-area-inset-top));
+  right: 1.2rem;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  backdrop-filter: blur(8px);
+  border-color: var(--btn-border);
+  color: var(--ink-soft);
+  transition: transform 0.45s var(--ease), background 0.25s var(--ease),
+    color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.theme-toggle:hover {
+  background: var(--ink);
+  color: var(--paper-solid);
+}
+
+.theme-toggle__icon {
+  width: 1.06rem;
+  height: 1.06rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.theme-toggle__icon--moon {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Show what the button will do, not what the room is already doing. */
+.theme-toggle__icon--sun {
+  display: none;
+}
+
+[data-theme='dark'] .theme-toggle__icon--sun {
+  display: block;
+}
+
+[data-theme='dark'] .theme-toggle__icon--moon {
+  display: none;
+}
+
+/* Step aside from an open panel, the way the progress dots do. */
+body.is-panel-open .theme-toggle {
+  transform: translateX(calc(var(--panel-width) * -1));
+}
+
 .skip {
   position: fixed;
   z-index: 30;
   top: max(1.2rem, env(safe-area-inset-top));
-  right: 1.2rem;
+  /* Clear of the theme toggle, which holds the corner. */
+  right: 4.6rem;
 }
 
 .hint {
@@ -206,7 +295,7 @@ body.is-3d {
   gap: 0.9rem;
   max-width: min(32rem, 92vw);
   padding: 0.7rem 0.8rem 0.7rem 1.2rem;
-  background: rgba(251, 250, 247, 0.9);
+  background: var(--surface);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rule);
   border-radius: 999px;
@@ -235,7 +324,7 @@ body.is-3d {
   z-index: 30;
   right: 1.2rem;
   bottom: max(1.4rem, calc(env(safe-area-inset-bottom) + 1.4rem));
-  background: rgba(251, 250, 247, 0.9);
+  background: var(--surface);
   backdrop-filter: blur(6px);
 }
 
@@ -252,7 +341,7 @@ body.is-3d {
   align-items: center;
   gap: 0.55rem;
   padding: 0.6rem 0.9rem;
-  background: rgba(251, 250, 247, 0.82);
+  background: var(--surface);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rule);
   border-radius: 999px;
@@ -307,7 +396,7 @@ body.is-panel-open .dots {
   width: var(--panel-width);
   max-width: 92vw;
   height: 100%;
-  background: rgba(251, 250, 247, 0.96);
+  background: var(--surface-solid);
   backdrop-filter: blur(14px);
   border-left: 1px solid var(--rule);
   transform: translateX(100%);
@@ -345,7 +434,7 @@ body.is-panel-open .dots {
 
 .panel__close:hover,
 .overlay__close:hover {
-  background: rgba(29, 27, 24, 0.07);
+  background: var(--hover-wash);
 }
 
 .panel__artist {
@@ -499,7 +588,7 @@ body.is-panel-open .dots {
   display: grid;
   place-items: center;
   padding: 2rem 1rem;
-  background: rgba(29, 27, 24, 0.42);
+  background: var(--scrim);
   backdrop-filter: blur(4px);
   opacity: 0;
   transition: opacity 0.35s var(--ease);
@@ -677,7 +766,7 @@ body.is-3d .fallback {
 
 .fallback__notice {
   padding: 0.9rem 1.1rem;
-  background: #efe9df;
+  background: var(--notice);
   border-left: 3px solid var(--accent);
   font-size: 0.92rem;
 }
@@ -807,6 +896,11 @@ body.is-3d .fallback {
     transform: translateX(-50%);
     opacity: 0;
     pointer-events: none;
+  }
+
+  /* The sheet is at the bottom on a phone, so the corner stays free. */
+  body.is-panel-open .theme-toggle {
+    transform: none;
   }
 }
 

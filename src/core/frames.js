@@ -32,6 +32,9 @@ export function buildHangings(loader) {
   const group = new Group();
   group.name = 'hangings';
   const targets = [];
+  // One material for every frame: they are all the same moulding, and it lets the
+  // theme repaint all eight at once.
+  const frameMaterial = new MeshStandardMaterial({ roughness: 0.55, metalness: 0.08 });
 
   for (const hanging of hangings) {
     const { work, position, normal } = hanging;
@@ -45,7 +48,7 @@ export function buildHangings(loader) {
     // Frame: a shallow box slightly larger than the canvas.
     const frame = new Mesh(
       new BoxGeometry(w + FRAME_WIDTH * 2, h + FRAME_WIDTH * 2, FRAME_DEPTH),
-      new MeshStandardMaterial({ color: '#2a2723', roughness: 0.55, metalness: 0.08 }),
+      frameMaterial,
     );
     frame.position.z = FRAME_DEPTH / 2;
     frame.castShadow = false;
@@ -76,7 +79,7 @@ export function buildHangings(loader) {
     group.add(piece);
   }
 
-  return { group, targets };
+  return { group, targets, materials: { frame: frameMaterial } };
 }
 
 /**

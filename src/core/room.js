@@ -18,11 +18,10 @@ import {
 import { room } from '../data/gallery.js';
 import { createContactShadowTexture, createFloorTexture } from './textures.js';
 
-const WALL_COLOUR = '#f2f0ec';
 const THICKNESS = 0.3;
 
 function wallMaterial() {
-  return new MeshStandardMaterial({ color: WALL_COLOUR, roughness: 0.96, metalness: 0 });
+  return new MeshStandardMaterial({ roughness: 0.96, metalness: 0 });
 }
 
 function box(width, height, depth, material, position) {
@@ -32,6 +31,10 @@ function box(width, height, depth, material, position) {
   return mesh;
 }
 
+/**
+ * @returns {{ group: Group, materials: Record<string, any> }} the materials are
+ *   handed back so the theme can repaint the hall without rebuilding it
+ */
 export function buildRoom() {
   const group = new Group();
   group.name = 'room';
@@ -41,26 +44,26 @@ export function buildRoom() {
   const walls = wallMaterial();
 
   // Floor
-  const floor = new Mesh(
-    new PlaneGeometry(room.width, room.depth),
-    new MeshStandardMaterial({ map: createFloorTexture(), roughness: 0.72, metalness: 0 }),
-  );
+  const floorMaterial = new MeshStandardMaterial({
+    map: createFloorTexture(),
+    roughness: 0.72,
+    metalness: 0,
+  });
+  const floor = new Mesh(new PlaneGeometry(room.width, room.depth), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   floor.name = 'floor';
   group.add(floor);
 
   // Ceiling
-  const ceiling = new Mesh(
-    new PlaneGeometry(room.width, room.depth),
-    new MeshStandardMaterial({ color: '#ffffff', roughness: 1, emissive: '#fbf6ec', emissiveIntensity: 0.35 }),
-  );
+  const ceilingMaterial = new MeshStandardMaterial({ roughness: 1 });
+  const ceiling = new Mesh(new PlaneGeometry(room.width, room.depth), ceilingMaterial);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.y = room.height;
   group.add(ceiling);
 
   // Skylight strips — they read as the source of the fill light.
-  const skylight = new MeshBasicMaterial({ color: '#fff8ec' });
+  const skylight = new MeshBasicMaterial();
   for (const z of [-2.6, 0, 2.6]) {
     const strip = new Mesh(new PlaneGeometry(room.width - 4, 0.9), skylight);
     strip.rotation.x = Math.PI / 2;
@@ -102,16 +105,30 @@ export function buildRoom() {
   );
 
   // Skirting board around the hall
-  const skirtMaterial = new MeshStandardMaterial({ color: '#e4e0d8', roughness: 0.85 });
+  const skirtMaterial = new MeshStandardMaterial({ roughness: 0.85 });
   const skirtH = 0.12;
   group.add(box(room.width, skirtH, 0.04, skirtMaterial, { x: 0, y: skirtH / 2, z: -halfD + 0.02 }));
   group.add(box(room.width, skirtH, 0.04, skirtMaterial, { x: 0, y: skirtH / 2, z: halfD - 0.02 }));
   group.add(box(0.04, skirtH, room.depth, skirtMaterial, { x: halfW - 0.02, y: skirtH / 2, z: 0 }));
 
-  group.add(buildVestibule(westX));
-  group.add(buildBench());
+  const vestibule = buildVestibule(westX);
+  group.add(vestibule.group);
 
-  return group;
+  const bench = buildBench();
+  group.add(bench.group);
+
+  return {
+    group,
+    materials: {
+      walls,
+      floor: floorMaterial,
+      ceiling: ceilingMaterial,
+      skylight,
+      skirting: skirtMaterial,
+      ...vestibule.materials,
+      ...bench.materials,
+    },
+  };
 }
 
 /**
@@ -125,28 +142,31 @@ function buildVestibule(westX) {
   const width = 5;
   const outerX = westX - depth;
 
-  const floor = new Mesh(
-    new PlaneGeometry(depth, width),
-    new MeshStandardMaterial({ color: '#cfc4b0', roughness: 0.9 }),
-  );
+  const floorMaterial = new MeshStandardMaterial({ roughness: 0.9 });
+  const floor = new Mesh(new PlaneGeometry(depth, width), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(westX - depth / 2, 0.001, room.doorway.center);
   group.add(floor);
 
-  const material = new MeshStandardMaterial({ color: '#e8e4dc', roughness: 0.97 });
+  const material = new MeshStandardMaterial({ roughness: 0.97 });
   group.add(box(depth, room.height, 0.2, material, { x: westX - depth / 2, y: room.height / 2, z: room.doorway.center - width / 2 }));
   group.add(box(depth, room.height, 0.2, material, { x: westX - depth / 2, y: room.height / 2, z: room.doorway.center + width / 2 }));
   group.add(box(0.2, room.height, width, material, { x: outerX, y: room.height / 2, z: room.doorway.center }));
 
-  const ceiling = new Mesh(
-    new PlaneGeometry(depth, width),
-    new MeshStandardMaterial({ color: '#f6f3ee', roughness: 1 }),
-  );
+  const ceilingMaterial = new MeshStandardMaterial({ roughness: 1 });
+  const ceiling = new Mesh(new PlaneGeometry(depth, width), ceilingMaterial);
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(westX - depth / 2, room.height, room.doorway.center);
   group.add(ceiling);
 
-  return group;
+  return {
+    group,
+    materials: {
+      vestibuleFloor: floorMaterial,
+      vestibuleWalls: material,
+      vestibuleCeiling: ceilingMaterial,
+    },
+  };
 }
 
 /** A bench near the entrance, for looking at the sculpture from. */
@@ -154,29 +174,30 @@ function buildBench() {
   const group = new Group();
   group.name = 'bench';
 
-  const wood = new MeshStandardMaterial({ color: '#b99a6d', roughness: 0.6 });
+  const wood = new MeshStandardMaterial({ roughness: 0.6 });
   const seat = box(0.5, 0.09, 2.2, wood, { x: -6.4, y: 0.45, z: 0 });
   seat.castShadow = true;
   group.add(seat);
 
-  const legs = new MeshStandardMaterial({ color: '#55504a', roughness: 0.5, metalness: 0.4 });
+  const legs = new MeshStandardMaterial({ roughness: 0.5, metalness: 0.4 });
   for (const z of [-0.85, 0.85]) {
     group.add(box(0.4, 0.41, 0.06, legs, { x: -6.4, y: 0.225, z }));
   }
 
   // Painted contact shadow, so the bench sits on the floor without a shadow map.
-  const shadow = new Mesh(
-    new PlaneGeometry(1.5, 3.2),
-    new MeshBasicMaterial({
-      map: createContactShadowTexture(),
-      transparent: true,
-      opacity: 0.42,
-      depthWrite: false,
-    }),
-  );
+  const shadowMaterial = new MeshBasicMaterial({
+    map: createContactShadowTexture(),
+    transparent: true,
+    opacity: 0.42,
+    depthWrite: false,
+  });
+  const shadow = new Mesh(new PlaneGeometry(1.5, 3.2), shadowMaterial);
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.set(-6.4, 0.006, 0);
   group.add(shadow);
 
-  return group;
+  return {
+    group,
+    materials: { benchWood: wood, benchLegs: legs, benchShadow: shadowMaterial },
+  };
 }

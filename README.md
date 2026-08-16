@@ -41,6 +41,24 @@ belong to whatever the visitor is actually reading.
 Links are shareable: `#/artwork/gulf-weather` opens standing in front of that
 work, `#/artist/banks` opens that artist.
 
+## Light and dark
+
+The button in the top-right corner switches between two hangs of the same room.
+Light is the white cube — daylight through the skylights, work lit evenly. Dark
+is the hall after hours: the skylights go down, the walls fall back to charcoal,
+and the spots carry the room. It is a different hang, not an inverted screenshot,
+so the walls, floor, frames, plinth and every light change along with the UI.
+
+A visitor's choice outranks their system's `prefers-color-scheme`, which outranks
+the white cube default, and the choice is remembered. An inline script in
+`index.html` settles the theme before the first paint so nobody gets a white
+flash on the way into a dark gallery — it repeats the rule in
+`src/ui/theme.js`, and the storage key has to stay the same in both.
+
+Both palettes live in one place each: `src/core/palette.js` for the room,
+`[data-theme='dark']` in `src/styles/main.css` for the page. The room is built
+once and repainted, so switching costs nothing and works mid-walk.
+
 ## Replacing the placeholder content
 
 Everything in the exhibition is invented — four fictional artists, twenty-one
@@ -69,9 +87,9 @@ src/
   main.js          wiring: picker → travel controller → panel
   data/            artists, works, placements, gallery details
   camera/          bounds, viewpoints, path planning, travel timing, controls
-  core/            Three.js scene: room, frames, placards, sculpture, lighting
+  core/            Three.js scene: room, frames, sculpture, lighting, palette
   interaction/     raycasting, hash routing, viewed-works progress
-  ui/              loading, panel, artist view, lightbox, dots, hints, fallback
+  ui/              loading, panel, artist view, lightbox, dots, hints, theme, fallback
 ```
 
 Everything in `camera/`, `interaction/router.js`, `interaction/progress.js` and

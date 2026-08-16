@@ -72,9 +72,10 @@ export function buildSculpture() {
   const paper = createPaperTexture();
 
   // Pedestal
+  const pedestalMaterial = new MeshStandardMaterial({ roughness: 0.9 });
   const pedestal = new Mesh(
     new CylinderGeometry(spec.pedestal.radius, spec.pedestal.radius * 1.03, spec.pedestal.height, 48),
-    new MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.9 }),
+    pedestalMaterial,
   );
   pedestal.position.y = spec.pedestal.height / 2;
   pedestal.receiveShadow = true;
@@ -87,7 +88,6 @@ export function buildSculpture() {
     map: paper,
     bumpMap: paper,
     bumpScale: 3.5,
-    color: '#e3d7c4',
     roughness: 0.98,
     metalness: 0,
   });
@@ -120,18 +120,23 @@ export function buildSculpture() {
   group.add(foot);
 
   // Painted contact shadow under the pedestal — a soft round pool, not a square.
+  const contactMaterial = new MeshBasicMaterial({
+    map: createContactShadowTexture(),
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+  });
   const contact = new Mesh(
     new PlaneGeometry(spec.pedestal.radius * 3.6, spec.pedestal.radius * 3.6),
-    new MeshBasicMaterial({
-      map: createContactShadowTexture(),
-      transparent: true,
-      opacity: 0.5,
-      depthWrite: false,
-    }),
+    contactMaterial,
   );
   contact.rotation.x = -Math.PI / 2;
   contact.position.y = 0.005;
   group.add(contact);
 
-  return { group, targets: [body, lobe, foot, pedestal] };
+  return {
+    group,
+    targets: [body, lobe, foot, pedestal],
+    materials: { sculpture: material, pedestal: pedestalMaterial, sculptureShadow: contactMaterial },
+  };
 }

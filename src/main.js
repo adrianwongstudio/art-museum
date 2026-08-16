@@ -20,6 +20,7 @@ import { prefersReducedMotion } from './camera/travel.js';
 import { viewpointForHanging, viewpointForSculpture } from './camera/viewpoints.js';
 import { applyToCamera, createVisitor } from './camera/visitor.js';
 
+import { paletteFor } from './core/palette.js';
 import { createRenderer, isWebGLAvailable } from './core/renderer.js';
 import { buildScene } from './core/scene.js';
 
@@ -34,6 +35,7 @@ import { createHints } from './ui/hints.js';
 import { createLightbox } from './ui/lightbox.js';
 import { createLoading } from './ui/loading.js';
 import { createPanel } from './ui/panel.js';
+import { createTheme, otherTheme } from './ui/theme.js';
 
 const dom = {
   canvas: document.getElementById('scene'),
@@ -46,12 +48,30 @@ const dom = {
   artistView: document.getElementById('artist-view'),
   lightbox: document.getElementById('lightbox'),
   fallback: document.getElementById('fallback'),
+  themeToggle: document.getElementById('theme-toggle'),
 };
 
 /** Where the visitor stands once they are through the door. */
 const ARRIVAL = { x: -5, z: 0, yaw: -Math.PI / 2 };
 /** Where the entrance walk begins, out in the vestibule. */
 const OUTSIDE = { x: -13, z: room.doorway.center, yaw: -Math.PI / 2 };
+
+/**
+ * The theme is settled before anything is drawn, so the loading screen already
+ * wears it and there is no flash of the wrong gallery.
+ */
+const theme = createTheme();
+
+theme.subscribe((name) => {
+  document.documentElement.dataset.theme = name;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', paletteFor(name).themeColor);
+
+  const label = `Switch to the ${otherTheme(name)} gallery`;
+  dom.themeToggle.setAttribute('aria-label', label);
+  dom.themeToggle.setAttribute('title', label);
+});
+
+dom.themeToggle.addEventListener('click', () => theme.toggle());
 
 const webgl = isWebGLAvailable();
 renderFallback(dom.fallback, { webgl });
@@ -71,9 +91,13 @@ function start() {
   const loading = createLoading({ root: dom.loading, onEnter: () => enterGallery() });
 
   const { renderer, camera } = createRenderer(dom.canvas);
-  const { scene, lighting, targets } = buildScene({
+  const { scene, lighting, targets, applyTheme } = buildScene({
     onProgress: (value) => loading.setProgress(value),
+    theme: theme.current,
   });
+
+  // The room is built once and repainted; switching mid-walk costs nothing.
+  theme.subscribe(applyTheme);
 
   const visitor = createVisitor();
   visitor.x = OUTSIDE.x;

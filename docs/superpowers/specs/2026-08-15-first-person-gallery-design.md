@@ -58,6 +58,22 @@ selectable and has its own panel, but it is *not* one of the eight progress dots
 **Style:** white cube. Off-white walls (#f2f0ec), pale oak floor, warm spotlights per
 work, emissive skylight strips in the ceiling for fill, a bench near the west end.
 
+**Dark hang (added 2026-08-16).** A toggle in the top-right corner switches the room
+between the white cube and the same hall after hours: charcoal walls, dimmed skylights,
+darker boards, and brighter, tighter spots carrying the room. Both palettes live in
+`core/palette.js`; the scene keeps references to its materials and lights so a switch is
+assignment rather than a rebuild, and therefore works mid-walk. The page's own palette
+mirrors it under `[data-theme='dark']`.
+
+Precedence is stored choice → `prefers-color-scheme` → light, remembered in
+`localStorage`. An inline script in `index.html` applies it before first paint to avoid a
+flash; it duplicates the rule deliberately and is commented on both sides.
+
+The toggle sits above the panel and the entrance screen so it is reachable throughout,
+and below the modal overlays, which trap focus. On a desktop it steps aside when the
+panel opens, as the progress dots do; on a phone the sheet is at the bottom, so it stays
+in the corner.
+
 ## 5. Movement — the hybrid model
 
 Three input paths, all sharing one camera state.
@@ -225,6 +241,8 @@ controller in `main.js`.
   floor behind it, frame and placard resolve to their work, floor points come back
   clamped, and an empty ray returns nothing. Cast against real geometry — a Raycaster
   needs no WebGL.
+- `theme` — precedence order, persistence, corrupt or hostile storage, subscriber
+  notification, and refusal of themes that do not exist.
 - `router` — parse and format for both routes, unknown and malformed hashes.
 - `progress` — add, dedupe, persist, restore, corrupt-storage tolerance.
 - `data` — every placement references an existing work, no duplicate wall+slot, every
