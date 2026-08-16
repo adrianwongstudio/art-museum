@@ -93,8 +93,10 @@ Mouse drag (not pointer lock — a plain click must remain "select") or one-fing
 drag rotates the view. Yaw unlimited, pitch clamped to ±60°. Sensitivity tuned so a
 full screen width drag is about 180°.
 
-A press that moves less than 6 px before release counts as a **click**, not a drag, and
-is routed to the raycaster.
+A press that moves less than the drag threshold before release counts as a **click**, not
+a drag, and is routed to the raycaster. The threshold is 6 px for a mouse and 14 px for
+touch — a fingertip is less precise than a cursor, and a tap that wanders 8 px is still
+a tap.
 
 ### 5.3 Free walk (desktop only)
 
@@ -104,14 +106,18 @@ sculpture's 1.6 m radius. Head bob applies while moving.
 
 ## 6. Interaction and raycasting
 
-A click ray tests, in order:
+A click ray takes the **nearest** thing it hits, and that hit says what it is:
 
-1. **Artwork planes** → travel to that work's viewpoint; on arrival open the panel, mark
-   viewed, update the URL hash.
-2. **Sculpture** → travel to its viewpoint (2.8 m out, on the side the visitor is already
-   on) and open its panel.
-3. **Floor** → travel to that point, keeping current facing. Closes any open panel.
-4. Anything else → ignored.
+- **A work** (its canvas, frame or placard — all three carry the same hanging) → travel
+  to that work's viewpoint; on arrival open the panel, mark viewed, update the hash.
+- **The sculpture** (body or plinth) → travel to its viewpoint, 2.8 m out on the side the
+  visitor is already standing, and open its panel.
+- **The floor** → travel to that point, keeping current facing. Closes any open panel.
+- Nothing → ignored.
+
+Nearest wins rather than a fixed category order: the sculpture is frequently silhouetted
+against a work on the far wall, and ranking works first would select the painting behind
+whatever the visitor actually clicked.
 
 Hovering an artwork on desktop brightens its spotlight slightly and shows a cursor
 change; touch has no hover state.
@@ -215,6 +221,10 @@ controller in `main.js`.
   1.6 m circle (sampled).
 - `travel` — duration rules (fixed 3.0 s for artworks, distance-scaled for floor between
   1.2 s and 3.0 s), easing endpoints, facing blend at t = 0, 0.45, 1.
+- `picker` — nearest hit wins: the sculpture beats a work behind it, a work beats the
+  floor behind it, frame and placard resolve to their work, floor points come back
+  clamped, and an empty ray returns nothing. Cast against real geometry — a Raycaster
+  needs no WebGL.
 - `router` — parse and format for both routes, unknown and malformed hashes.
 - `progress` — add, dedupe, persist, restore, corrupt-storage tolerance.
 - `data` — every placement references an existing work, no duplicate wall+slot, every
@@ -233,6 +243,10 @@ Rendering is not unit-tested; it is verified by running the app in a browser.
 - **The entrance walk cannot be interrupted.** Free walking clamps to the room's
   interior, so accepting input while the visitor is still out in the vestibule would
   teleport them through the wall. Only *Skip* interrupts it.
+- **Starting a new walk dismisses the panel**, which otherwise spent the three-second
+  walk describing the work being walked away from. The content is replaced on arrival.
+- **The tab title follows the visitor**, so browser history and shared links carry the
+  name of the work rather than the name of the site.
 - **The sculpture is a catalogue work like any other** (`w-reyes-sculpture`), so the
   panel, artist view and similar-works logic treat it uniformly. It is simply excluded
   from the eight progress dots.
