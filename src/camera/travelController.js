@@ -29,17 +29,14 @@ export function createTravelController({ visitor, reducedMotion = false }) {
   let targetYaw = 0;
   let targetPitch = 0;
   let onArrive = null;
-  let destination = null;
 
   function finish(arrived) {
     const callback = onArrive;
-    const where = destination;
     path = null;
     onArrive = null;
-    destination = null;
     visitor.bobY = 0;
     visitor.bobRoll = 0;
-    if (arrived) callback?.(where);
+    if (arrived) callback?.();
   }
 
   return {
@@ -47,16 +44,11 @@ export function createTravelController({ visitor, reducedMotion = false }) {
       return path !== null;
     },
 
-    /** Where this walk is headed, or null when standing still. */
-    get destination() {
-      return destination;
-    },
-
     /**
      * @param {{position: {x:number,z:number}, yaw:number, pitch?:number}} viewpoint
-     * @param {{kind?: 'artwork'|'floor'|'entrance', meta?: any, onArrive?: Function}} options
+     * @param {{kind?: 'artwork'|'floor'|'entrance', onArrive?: Function}} options
      */
-    go(viewpoint, { kind = 'artwork', meta = null, onArrive: callback = null } = {}) {
+    go(viewpoint, { kind = 'artwork', onArrive: callback = null } = {}) {
       path = planPath({ x: visitor.x, z: visitor.z }, viewpoint.position);
       duration = travelDuration({ kind, distance: pathLength(path), reducedMotion });
       elapsed = 0;
@@ -64,7 +56,6 @@ export function createTravelController({ visitor, reducedMotion = false }) {
       startPitch = visitor.pitch;
       targetYaw = viewpoint.yaw;
       targetPitch = clampPitch(viewpoint.pitch ?? 0);
-      destination = meta;
       onArrive = callback;
     },
 

@@ -10,7 +10,7 @@
 
 import { room } from '../data/gallery.js';
 
-export const MAX_PITCH = Math.PI / 3; // 60 degrees
+const MAX_PITCH = Math.PI / 3; // 60 degrees
 
 export function createVisitor() {
   return {

@@ -135,10 +135,6 @@ export function createControls({
   window.addEventListener('blur', onBlur);
 
   return {
-    get walking() {
-      return keys.size > 0;
-    },
-
     /** Free walking. Guided travel drives the visitor directly and skips this. */
     update(dt) {
       let forward = 0;

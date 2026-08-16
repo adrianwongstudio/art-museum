@@ -229,7 +229,6 @@ function start() {
 
     travel.go(viewpoint, {
       kind: 'artwork',
-      meta: hanging,
       onArrive: () => {
         panel.show(hanging.work);
         frameAroundPanel();
@@ -252,7 +251,6 @@ function start() {
 
     travel.go(viewpoint, {
       kind: 'artwork',
-      meta: { sculpture: true },
       onArrive: () => {
         panel.show(work);
         frameAroundPanel();

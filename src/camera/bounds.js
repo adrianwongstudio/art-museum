@@ -49,5 +49,3 @@ export function pushOutOfSculpture(position, radius = sculpture.radius) {
 export function clampToRoom(position) {
   return pushOutOfSculpture(clampToWalls(position));
 }
-
-export const limits = { maxX, maxZ };

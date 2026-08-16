@@ -50,7 +50,3 @@ export const artists = [
 
 /** @type {Record<string, typeof artists[number]>} */
 export const artistsById = Object.fromEntries(artists.map((a) => [a.id, a]));
-
-export function getArtist(id) {
-  return artistsById[id] ?? null;
-}
