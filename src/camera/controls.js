@@ -5,15 +5,18 @@
  * selecting a work, and pointer lock would also make the gallery hostile on a
  * phone, where the same code path handles a one-finger drag.
  *
- * A press that travels less than DRAG_THRESHOLD pixels is a click; anything more
- * is a look. That single rule is what lets one gesture do both jobs.
+ * A press that travels less than the drag threshold is a click; anything more is
+ * a look. That single rule is what lets one gesture do both jobs.
  */
 
 import { keyboardIsInUI } from '../ui/focus.js';
 import { clampToRoom } from './bounds.js';
 import { clampPitch } from './visitor.js';
 
-const DRAG_THRESHOLD = 6; // px
+// A mouse pointer is precise; a fingertip is not, and a tap that wanders eight
+// pixels is still a tap. Judging both by the same six pixels would make the
+// gallery feel unresponsive to touch.
+const DRAG_THRESHOLD = { mouse: 6, touch: 14 }; // px
 const LOOK_SPEED = 0.0032; // radians per pixel — a screen width is about 180 degrees
 const WALK_SPEED = 1.4; // metres per second
 const ACCELERATION = 8; // how fast walking spins up and down
@@ -41,8 +44,28 @@ export function createControls({
   let pointerId = null;
   let last = { x: 0, y: 0 };
   let travelled = 0;
+  let threshold = DRAG_THRESHOLD.mouse;
   let walkPhase = 0;
   let speed = 0;
+
+  // Pointer capture is a convenience — it keeps a drag alive outside the canvas.
+  // It is never worth throwing over: a browser that refuses it should still let
+  // the visitor look around.
+  const capture = (id) => {
+    try {
+      canvas.setPointerCapture?.(id);
+    } catch {
+      /* the drag simply ends if the pointer leaves the canvas */
+    }
+  };
+
+  const release = (id) => {
+    try {
+      canvas.releasePointerCapture?.(id);
+    } catch {
+      /* nothing held it in the first place */
+    }
+  };
 
   const ndc = (event) => ({
     x: (event.clientX / window.innerWidth) * 2 - 1,
@@ -55,7 +78,8 @@ export function createControls({
     pointerId = event.pointerId;
     last = { x: event.clientX, y: event.clientY };
     travelled = 0;
-    canvas.setPointerCapture?.(event.pointerId);
+    threshold = event.pointerType === 'mouse' ? DRAG_THRESHOLD.mouse : DRAG_THRESHOLD.touch;
+    capture(event.pointerId);
   }
 
   function onPointerMove(event) {
@@ -69,7 +93,7 @@ export function createControls({
     last = { x: event.clientX, y: event.clientY };
     travelled += Math.hypot(dx, dy);
 
-    if (travelled < DRAG_THRESHOLD) return;
+    if (travelled < threshold) return;
 
     // The visitor has taken the wheel — stop walking them somewhere.
     onInterrupt?.();
@@ -79,9 +103,9 @@ export function createControls({
 
   function onPointerUp(event) {
     if (pointerId !== event.pointerId) return;
-    canvas.releasePointerCapture?.(event.pointerId);
+    release(event.pointerId);
     pointerId = null;
-    if (travelled < DRAG_THRESHOLD) onSelect?.(ndc(event));
+    if (travelled < threshold) onSelect?.(ndc(event));
   }
 
   function onPointerCancel(event) {
